@@ -1,19 +1,19 @@
 use halo2_proofs::poly::commitment::Params;
-use halo2curves::pasta::vesta;            // Vesta is the curve (affine)
+use halo2curves::pasta::{Fp, vesta};
 use std::fs;
 
-const K: u32   = 10;          // 2^K rows — tiny demo
-const FILE: &str = "params.bin";
+pub type Curve = vesta::Affine;           // scalar field == Fp
 
-pub type Curve = vesta::Affine;          // CurveAffine type used everywhere
+const K: u32 = 12;        // 2¹² rows, plenty for the toy circuit
+const FILE: &str = "params.bin";
 
 pub fn load_or_create() -> Params<Curve> {
     if let Ok(buf) = fs::read(FILE) {
         let mut rdr = std::io::Cursor::new(buf);
-        return Params::<Curve>::read(&mut rdr).expect("deserialize params");
+        return Params::<Curve>::read(&mut rdr).unwrap();
     }
     let params = Params::<Curve>::new(K);
-    let mut v = Vec::new();
+    let mut v = vec![];
     params.write(&mut v).unwrap();
     fs::write(FILE, v).unwrap();
     params

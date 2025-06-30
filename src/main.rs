@@ -1,54 +1,56 @@
-//! src/main.rs  – works with halo2_proofs 0.3 and the TinyCircuit demo
+mod params;
+mod chips;
+mod circuit;
+mod verifier;
 
-mod params;     // universal parameters helper
-mod circuit;    // TinyCircuit
-mod verifier;   // proof verification helper
-
-use circuit::TinyCircuit;
+use circuit::{MlpCircuit, Witness, IN, HID};
 use halo2_proofs::{
     plonk::{keygen_pk, keygen_vk, create_proof},
     transcript::{Blake2bWrite, Challenge255},
 };
 use halo2curves::pasta::Fp;
-use params::Curve;                     // Curve = vesta::Affine (see params.rs)
+use params::Curve;
 
 fn main() {
-    // 1. create a witness for the tiny circuit --------------------------
-    let circuit = TinyCircuit { witness_val: Some(Fp::from(42)) };
+    // --- build a small deterministic witness ---------------------------
+    let w = Witness {
+        x:  [Fp::from(3), Fp::from(5)],
+        w1: [
+            [Fp::from(2), Fp::from(1)],   // neuron 0 weights
+            [Fp::from(4), Fp::from(3)],   // neuron 1 weights
+        ],
+        b1: [Fp::from(7), Fp::from(11)],
+        w2: [Fp::from(9), Fp::from(6)],
+        b2: Fp::from(13),
+    };
 
-    // 2. load (or create) universal parameters & generate keys ----------
+    // --- keys -----------------------------------------------------------
     let params = params::load_or_create();
-    let empty  = TinyCircuit::default();             // empty version for key-gen
-    let vk = keygen_vk(&params, &empty).expect("vk");
-    let pk = keygen_pk(&params, vk.clone(), &empty).expect("pk");
+    let empty  = MlpCircuit::default();
+    let vk = keygen_vk(&params, &empty).unwrap();
+    let pk = keygen_pk(&params, vk.clone(), &empty).unwrap();
 
-    /* -- 3. generate a proof ------------------------------------------- */
-
-    let mut transcript = Blake2bWrite::<_, _, Challenge255<_>>::init(Vec::new());
-
+    // --- proof ----------------------------------------------------------
+    let circuit = MlpCircuit { wit: Some(w) };
+    let mut tr = Blake2bWrite::<_, _, Challenge255<_>>::init(Vec::new());
     create_proof::<Curve, _, _, _, _>(
         &params,
         &pk,
-        &[circuit],          //  ← value, not &value
-        &[&[]],              //  one (empty) public-input slice
+        &[circuit],     // slice of circuits (by value)
+        &[&[]],         // no public inputs
         rand::rngs::OsRng,
-        &mut transcript,
-    )
-    .expect("proof");
+        &mut tr,
+    ).unwrap();
+    let proof = tr.finalize();
 
-    let proof = transcript.finalize();
-
-
-    // 4. verify the proof -----------------------------------------------
-    verifier::verify(&params, &vk, &proof).expect("verify");
+    // --- verify ---------------------------------------------------------
+    verifier::verify(&params, &vk, &proof).unwrap();
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
-    fn prove_and_verify_rnn() {
-        main(); // just run main – panics if verification fails
+    fn prove_and_verify_mlp() {
+        super::main();
     }
 }
