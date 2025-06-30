@@ -20,7 +20,7 @@ pub fn verify(
         params,
         vk,
         SingleVerifier::new(params),  // ③ verification strategy
-        &[],                          // ④ no public inputs
+        &[&[]],                          // ④ no public inputs
         &mut tr,                      // ⑤ transcript reader
     )
 }
