@@ -1,5 +1,5 @@
 # zk-MLP 🧮🔒  
-*A 100-line Halo 2 proof of a (2 → 2 → 1) multilayer-perceptron*
+*A Halo 2 proof of a (2 → 2 → 1) multilayer-perceptron*
 
 [![Rust](https://img.shields.io/badge/Rust-1.75%2B-orange.svg)](https://www.rust-lang.org)  
 Builds, proves & verifies with **`halo2-proofs` 0.3** (IPA commitment ― no forks).
