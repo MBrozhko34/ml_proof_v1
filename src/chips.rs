@@ -54,8 +54,17 @@ impl Affine2Chip {
         w1: Fp,
         bias: Fp,
     ) -> Result<Value<Fp>, Error> {
-        // enable the selector on *this* row
+        // enable selector
         cfg.q.enable(region, offset)?;
+
+        // ----------- debug log --------------------------------------------
+        if cfg!(debug_assertions) {
+            println!(
+                "[DEBUG] row {}: x=({:?},{:?})  w=({:?},{:?})  b={:?}",
+                offset, x0, x1, w0, w1, bias
+            );
+        }
+        // ------------------------------------------------------------------
 
         region.assign_advice(|| "x0", cfg.x0, offset, || x0)?;
         region.assign_advice(|| "x1", cfg.x1, offset, || x1)?;
@@ -67,7 +76,14 @@ impl Affine2Chip {
             .zip(x1)
             .map(|(a, b)| a * w0 + b * w1 + bias);
 
+        // ---------- debug log ---------------------------------------------
+        if cfg!(debug_assertions) {
+            println!("[DEBUG] row {offset}: y={:?}", y_val);
+        }
+        // ------------------------------------------------------------------
+
         region.assign_advice(|| "y", cfg.y, offset, || y_val)?;
         Ok(y_val)
     }
+
 }
