@@ -1,0 +1,12 @@
+[package]
+name    = "ml_proof_v1"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+halo2_proofs = "0.3"
+halo2curves  = "0.5"   # the curve crate that matches 0.3
+rand   = "0.8"
+thiserror = "1.0"
+serde = { version = "1", features = ["derive"] }
+
